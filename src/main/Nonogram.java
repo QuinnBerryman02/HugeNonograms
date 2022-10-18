@@ -8,6 +8,8 @@ import java.util.List;
 
 public class Nonogram {
     Hints hints = null;
+    Hints obscuredHints = null;
+    int hintW, hintH;
     Palette palette = null;
     SimpleColor background = null;
     int W = 0,H = 0;
@@ -15,16 +17,15 @@ public class Nonogram {
     public Nonogram(BufferedImage image) {
         W = image.getWidth();
         H = image.getHeight();
-        hints = calculateNonogramHints(image);
         palette = new Palette(image, true);
         background = palette.findLargestAmount();
+        hints = calculateNonogramHints(image);
         System.out.println("New Nonogram created");
         System.out.println("Size: " + W + "x" + H);
+        System.out.println("Hint Sizes: " + hintW + "x" + hintH);
         palette.displayShort();
         System.out.println("Background color is: " + background);
-        hints.display();
-        hints = hints.obscure(new SimpleColor("#FFFFFF"));
-        hints.display();
+        obscuredHints = hints.obscure(background);
     }
 
     public Hints calculateNonogramHints(BufferedImage image) {
@@ -32,40 +33,52 @@ public class Nonogram {
         ColorAmount previous;
         Hints hints = new Hints();
         List<List<ColorAmount>> rows = new ArrayList<List<ColorAmount>>();
+        hintW = Integer.MIN_VALUE;
+        hintH = Integer.MIN_VALUE;
         for(int i=0;i<H;i++) {
             ArrayList<ColorAmount> row = new ArrayList<ColorAmount>();
+            int effectiveSize=0;
             for(int j=0;j<W;j++) {
                 current = new SimpleColor(image.getRGB(j, i));
+                boolean isBackground = current.exact(background);
                 if(row.size()==0) {
                     row.add(0, new ColorAmount(current, 1));
+                    effectiveSize += isBackground ? 0 : 1;
                     continue;
                 }
                 previous = row.get(0);
-                if(!previous.color.equals(current)) {
+                if(!previous.color.exact(current)) {
                     row.add(0, new ColorAmount(current, 1));
+                    effectiveSize += isBackground ? 0 : 1;
                 } else {
                    previous.incr();
                 }
             }
+            if(effectiveSize>hintW) hintW=effectiveSize;
             Collections.reverse(row);
             rows.add(row);
         }
         List<List<ColorAmount>> cols = new ArrayList<List<ColorAmount>>();
         for(int j=0;j<W;j++) {
             ArrayList<ColorAmount> col = new ArrayList<ColorAmount>();
+            int effectiveSize=0;
             for(int i=0;i<H;i++) {
                 current = new SimpleColor(image.getRGB(j, i));
+                boolean isBackground = current.exact(background);
                 if(col.size()==0) {
                     col.add(0, new ColorAmount(current, 1));
+                    effectiveSize += isBackground ? 0 : 1;
                     continue;
                 }
                 previous = col.get(0);
-                if(!previous.color.equals(current)) {
+                if(!previous.color.exact(current)) {
                     col.add(0, new ColorAmount(current, 1));
+                    effectiveSize += isBackground ? 0 : 1;
                 } else {
                    previous.incr();
                 }
             }
+            if(effectiveSize>hintH) hintH=effectiveSize;
             Collections.reverse(col);
             cols.add(col);
         }
@@ -85,14 +98,14 @@ public class Nonogram {
             for(int i=0;i<rows.size();i++) {
                 ArrayList<ColorAmount> newrow = new ArrayList<ColorAmount>();
                 for(ColorAmount ca : rows.get(i)) {
-                    if(!ca.color.equals(ignore)) newrow.add(ca);
+                    if(!ca.color.exact(ignore)) newrow.add(ca);
                 }
                 newrows.add(newrow);
             }
             for(int i=0;i<cols.size();i++) {
                 ArrayList<ColorAmount> newcol = new ArrayList<ColorAmount>();
                 for(ColorAmount ca : cols.get(i)) {
-                    if(!ca.color.equals(ignore)) newcol.add(ca);
+                    if(!ca.color.exact(ignore)) newcol.add(ca);
                 }
                 newcols.add(newcol);
             }

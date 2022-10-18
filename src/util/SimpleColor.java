@@ -33,6 +33,12 @@ public class SimpleColor {
         && Math.abs(b - sc.b) <= RANGE*strictness;
     }
 
+    public boolean exact(SimpleColor sc) {
+        return Math.abs(r - sc.r) <= 0
+        && Math.abs(g - sc.g) <= 0
+        && Math.abs(b - sc.b) <= 0;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SimpleColor) {

@@ -42,7 +42,7 @@ class PixelColorCounter {
         paletteReduction.reduceDots();
         System.out.println("Second Iteration Picture Colors = " + paletteReduction.size());
         img2 = simplifyPng(img1, midFile, paletteReduction);  //simplify original
-        img3 = simplifyPng(img2, finalFile, paletteReduction);  //match to desired
+        img3 = simplifyPng(img2, finalFile, paletteGoal);  //match to desired
         comparePNGs(compareFile, img1, img2, img3);             //compare results
         Palette paletteResult = new Palette(img3, true);
         System.out.println("Best Match");
