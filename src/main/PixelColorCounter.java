@@ -3,9 +3,7 @@ package src.main;
 import src.util.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 
 class PixelColorCounter {
@@ -24,75 +22,75 @@ class PixelColorCounter {
         File folder = new File(inFolder);
         File[] inputs = folder.listFiles();
         for (File f : inputs) {
-            System.out.println(f.getName().split("[.]")[0]);
-            try {
-                reduceMatchCompare(f.getName().split("[.]")[0]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            reduceMatchCompare(f.getName().split("[.]")[0]);
         }
     }
 
-    public static Palette createPaletteFromFile(String name) throws IOException {
-        File file=new File(name); 
-        FileReader fr=new FileReader(file);   
-        BufferedReader br=new BufferedReader(fr);  
-        String line;  
-        Palette palette = new Palette();
-        while((line=br.readLine())!=null) {  
-            palette.addColor(new SimpleColor(line));
-        }  
-        fr.close();
-        return palette;
-    }
-
-    public static void reduceMatchCompare(String name) throws IOException {
+    public static void reduceMatchCompare(String name) {
         String inFile = inFolder + name + ".png";
         String midFile = midFolder + name + "_temporary" + ".png";
         String finalFile = finalFolder + name + "_final" + ".png";
         String compareFile = compareFolder + name + "_compare" + ".png";
+        BufferedImage img1 = stringToImage(inFile);
+        BufferedImage img2,img3;
         System.out.println("-----------------------------------------------");
-        Palette paletteGoal = createPaletteFromFile(matchingPalette);
-        Palette paletteReduction = readPng(inFile, false);
+        Palette paletteGoal = readPaletteFile(matchingPalette);
+        Palette paletteReduction = new Palette(img1, false);
         System.out.println("Total Goal Colors = " + paletteGoal.size());
         System.out.println("PNG = " + name);
         System.out.println("First Iteration Picture Colors = " + paletteReduction.size());
         paletteReduction.reduceDots();
         System.out.println("Second Iteration Picture Colors = " + paletteReduction.size());
-        simplifyPng(inFile, midFile, paletteReduction);  //simplify original
-        simplifyPng(midFile, finalFile, paletteGoal);  //match to desired
-        comparePng(inFile, midFile, finalFile, compareFile);
-        Palette paletteResult = readPng(finalFile, true);
+        img2 = simplifyPng(img1, midFile, paletteReduction);  //simplify original
+        img3 = simplifyPng(img2, finalFile, paletteReduction);  //match to desired
+        comparePNGs(compareFile, img1, img2, img3);             //compare results
+        Palette paletteResult = new Palette(img3, true);
         System.out.println("Best Match");
         paletteResult.display();
         System.out.println("\n-----------------------------------------------");
     }
 
-    public static void comparePng(String p1, String p2, String p3, String output) throws IOException {
-        File file1 = new File(p1);
-        File file2 = new File(p2);
-        File file3 = new File(p3);
-        File newFile = new File(output);
-        BufferedImage image1 = ImageIO.read(file1);
-        BufferedImage image2 = ImageIO.read(file2);
-        BufferedImage image3 = ImageIO.read(file3);
-        int w = image1.getWidth();
-        int h = image1.getHeight();
-        BufferedImage newImage = new BufferedImage(w*3, h, BufferedImage.TYPE_INT_RGB);
-        for(int i=0;i<h;i++) {
-            for(int j=0;j<w;j++) {
-                newImage.setRGB(j, i, image1.getRGB(j, i));
-                newImage.setRGB(j+w, i, image2.getRGB(j, i));
-                newImage.setRGB(j+w+w,i, image3.getRGB(j, i));
-            }
+    public static BufferedImage stringToImage(String name) {
+        File file = new File(name);
+        try {
+            return ImageIO.read(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
-        ImageIO.write(newImage, "png", newFile);
     }
 
-    public static void simplifyPng(String input, String output, Palette palette) throws IOException {
-        File file = new File(input);
-        File newFile = new File(output);
-        BufferedImage image = ImageIO.read(file);
+    public static Palette readPaletteFile(String name) {
+        File file=new File(name); 
+        try {
+            return new Palette(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static BufferedImage comparePNGs(String output, BufferedImage... images) {
+        int w = images[0].getWidth();
+        int h = images[0].getHeight();
+        BufferedImage newImage = new BufferedImage(w*images.length, h, BufferedImage.TYPE_INT_RGB);
+        for(int i=0;i<h;i++) {
+            for(int j=0;j<w;j++) {
+                for(int a=0;a<images.length;a++) {
+                    newImage.setRGB(j+a*w, i, images[a].getRGB(j, i));
+                }
+            }
+        }
+        try {
+            File newFile = new File(output);
+            ImageIO.write(newImage, "png", newFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return newImage;
+    }
+
+    public static BufferedImage simplifyPng(BufferedImage image, String output, Palette palette) {
         int w = image.getWidth();
         int h = image.getHeight();
         BufferedImage newImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -104,22 +102,13 @@ class PixelColorCounter {
                 newImage.setRGB(j, i, color.toInt());
             }
         }
-        ImageIO.write(newImage, "png", newFile);
-    }
-
-    public static Palette readPng(String name, boolean strict) throws IOException {
-        File file = new File(name);
-        BufferedImage image = ImageIO.read(file);
-        int w = image.getWidth();
-        int h = image.getHeight();
-        System.out.println(w + "x" + h);
-        Palette palette = new Palette();
-        for(int i=0;i<h;i++) {
-            for(int j=0;j<w;j++) {
-                palette.addPixel(new SimpleColor(image.getRGB(j, i)), strict ? 0 : 1);
-            }
+        try {
+            File newFile = new File(output);
+            ImageIO.write(newImage, "png", newFile);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return palette;
+        return newImage;
     }
 }
 

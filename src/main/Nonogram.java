@@ -1,44 +1,40 @@
 package src.main;
 
 import src.util.*;
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Nonogram {
-    public static void main(String[] args) {
-        begin("resources/middle/hit1_temporary.png");
+    Hints hints = null;
+    Palette palette = null;
+    SimpleColor background = null;
+    int W = 0,H = 0;
+
+    public Nonogram(BufferedImage image) {
+        W = image.getWidth();
+        H = image.getHeight();
+        hints = calculateNonogramHints(image);
+        palette = new Palette(image, true);
+        background = palette.findLargestAmount();
+        System.out.println("New Nonogram created");
+        System.out.println("Size: " + W + "x" + H);
+        palette.displayShort();
+        System.out.println("Background color is: " + background);
+        hints.display();
+        hints = hints.obscure(new SimpleColor("#FFFFFF"));
+        hints.display();
     }
 
-    public static void begin(String name) {
-        Hint hint = null;
-        try {
-            hint = calculateNonogramHints(name);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-        hint.display();
-        hint = hint.obscure(new SimpleColor("#FFFFFF"));
-        hint.display();
-    }
-
-    public static Hint calculateNonogramHints(String name) throws IOException {
-        File file = new File(name);
-        BufferedImage image = ImageIO.read(file);
-        int w = image.getWidth();
-        int h = image.getHeight();
+    public Hints calculateNonogramHints(BufferedImage image) {
         SimpleColor current;
         ColorAmount previous;
-        Hint hint = new Hint();
+        Hints hints = new Hints();
         List<List<ColorAmount>> rows = new ArrayList<List<ColorAmount>>();
-        for(int i=0;i<h;i++) {
+        for(int i=0;i<H;i++) {
             ArrayList<ColorAmount> row = new ArrayList<ColorAmount>();
-            for(int j=0;j<w;j++) {
+            for(int j=0;j<W;j++) {
                 current = new SimpleColor(image.getRGB(j, i));
                 if(row.size()==0) {
                     row.add(0, new ColorAmount(current, 1));
@@ -55,9 +51,9 @@ public class Nonogram {
             rows.add(row);
         }
         List<List<ColorAmount>> cols = new ArrayList<List<ColorAmount>>();
-        for(int j=0;j<w;j++) {
+        for(int j=0;j<W;j++) {
             ArrayList<ColorAmount> col = new ArrayList<ColorAmount>();
-            for(int i=0;i<h;i++) {
+            for(int i=0;i<H;i++) {
                 current = new SimpleColor(image.getRGB(j, i));
                 if(col.size()==0) {
                     col.add(0, new ColorAmount(current, 1));
@@ -73,17 +69,17 @@ public class Nonogram {
             Collections.reverse(col);
             cols.add(col);
         }
-        hint.rows = rows;
-        hint.cols = cols;
-        return hint;
+        hints.rows = rows;
+        hints.cols = cols;
+        return hints;
     }
 
-    static class Hint {
+    static class Hints {
         List<List<ColorAmount>> rows;
         List<List<ColorAmount>> cols;
 
-        Hint obscure(SimpleColor ignore) {
-            Hint obscured = new Hint();
+        Hints obscure(SimpleColor ignore) {
+            Hints obscured = new Hints();
             List<List<ColorAmount>> newrows = new ArrayList<List<ColorAmount>>();
             List<List<ColorAmount>> newcols = new ArrayList<List<ColorAmount>>();
             for(int i=0;i<rows.size();i++) {
