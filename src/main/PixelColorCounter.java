@@ -11,21 +11,22 @@ import java.io.IOException;
 class PixelColorCounter {
     static String inFolder = "resources/input/";
     static String midFolder= "resources/middle/";
+    static String finalFolder = "resources/final/";
     static String compareFolder = "resources/compare/";
-    static String finalLegoFolder = "resources/final/";
+    static String matchingPalette = "legopalette.txt";
     public static void main(String[] args) {
-        generateOuputs();
+        generateOuputsForInputs();
     }
 
     
 
-    public static void generateOuputs() {
+    public static void generateOuputsForInputs() {
         File folder = new File(inFolder);
         File[] inputs = folder.listFiles();
         for (File f : inputs) {
             System.out.println(f.getName().split("[.]")[0]);
             try {
-                runLego(f.getName().split("[.]")[0]);
+                reduceMatchCompare(f.getName().split("[.]")[0]);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -45,25 +46,25 @@ class PixelColorCounter {
         return palette;
     }
 
-    public static void runLego(String name) throws IOException {
+    public static void reduceMatchCompare(String name) throws IOException {
         String inFile = inFolder + name + ".png";
         String midFile = midFolder + name + "_temporary" + ".png";
+        String finalFile = finalFolder + name + "_final" + ".png";
         String compareFile = compareFolder + name + "_compare" + ".png";
-        String finalFile = finalLegoFolder + name + "_final" + ".png";
         System.out.println("-----------------------------------------------");
-        Palette paletteGoal = createPaletteFromFile("legopalette.txt");
-        Palette paletteAttempt = readPng(inFile);
-        System.out.println("Total Lego Colors = " + paletteGoal.size());
+        Palette paletteGoal = createPaletteFromFile(matchingPalette);
+        Palette paletteReduction = readPng(inFile, false);
+        System.out.println("Total Goal Colors = " + paletteGoal.size());
         System.out.println("PNG = " + name);
-        System.out.println("First Iteration Picture Colors = " + paletteAttempt.size());
-        paletteAttempt.reduceDots();
-        System.out.println("Second Iteration Picture Colors = " + paletteAttempt.size());
-        simplifyPng(inFile, midFile, paletteAttempt);
-        simplifyPng(midFile, finalFile, paletteGoal);
+        System.out.println("First Iteration Picture Colors = " + paletteReduction.size());
+        paletteReduction.reduceDots();
+        System.out.println("Second Iteration Picture Colors = " + paletteReduction.size());
+        simplifyPng(inFile, midFile, paletteReduction);  //simplify original
+        simplifyPng(midFile, finalFile, paletteGoal);  //match to desired
         comparePng(inFile, midFile, finalFile, compareFile);
-        Palette paletteSuccess = readPngStrict(finalFile);
-        System.out.println("Best Match has " + paletteSuccess.count() + " dots costing " + paletteSuccess.calculateCost() + " euro.");
-        paletteSuccess.display();
+        Palette paletteResult = readPng(finalFile, true);
+        System.out.println("Best Match");
+        paletteResult.display();
         System.out.println("\n-----------------------------------------------");
     }
 
@@ -106,21 +107,7 @@ class PixelColorCounter {
         ImageIO.write(newImage, "png", newFile);
     }
 
-    public static Palette readPngStrict(String name) throws IOException {
-        File file = new File(name);
-        BufferedImage image = ImageIO.read(file);
-        int w = image.getWidth();
-        int h = image.getHeight();
-        Palette palette = new Palette();
-        for(int i=0;i<h;i++) {
-            for(int j=0;j<w;j++) {
-                palette.addPixelStrict(new SimpleColor(image.getRGB(j, i)));
-            }
-        }
-        return palette;
-    }
-
-    public static Palette readPng(String name) throws IOException {
+    public static Palette readPng(String name, boolean strict) throws IOException {
         File file = new File(name);
         BufferedImage image = ImageIO.read(file);
         int w = image.getWidth();
@@ -129,7 +116,7 @@ class PixelColorCounter {
         Palette palette = new Palette();
         for(int i=0;i<h;i++) {
             for(int j=0;j<w;j++) {
-                palette.addPixel(new SimpleColor(image.getRGB(j, i)));
+                palette.addPixel(new SimpleColor(image.getRGB(j, i)), strict ? 0 : 1);
             }
         }
         return palette;

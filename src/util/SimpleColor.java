@@ -3,23 +3,17 @@ package src.util;
 import java.awt.Color;
 
 public class SimpleColor {
-    int r;
-    int g;
-    int b;
+    private int r,g,b;
+    
+    
     public static int strictness = 1;
-    public static int SHADES = 17;
-    public static int RANGE = 255 / SHADES;
-    public static boolean REDUCE = false;
+    public final static int SHADES = 17;
+    public final static int RANGE = 255 / SHADES;
 
     public SimpleColor(String hexcode) {
         r = fromHex2(hexcode.substring(1, 3));
         g = fromHex2(hexcode.substring(3, 5));
         b = fromHex2(hexcode.substring(5, 7));
-        if(REDUCE) {
-            r = reduce(r);
-            g = reduce(g);
-            b = reduce(b);
-        }
     }
 
     public SimpleColor(int color) {
@@ -27,11 +21,6 @@ public class SimpleColor {
         r = c.getRed();
         g = c.getGreen();
         b = c.getBlue();
-        if(REDUCE) {
-            r = reduce(r);
-            g = reduce(g);
-            b = reduce(b);
-        }
     }
 
     public int toInt() {
@@ -42,10 +31,6 @@ public class SimpleColor {
         return Math.abs(r - sc.r) <= RANGE*strictness
         && Math.abs(g - sc.g) <= RANGE*strictness
         && Math.abs(b - sc.b) <= RANGE*strictness;
-    }
-
-    static int reduce(int x) {
-        return Math.min(Math.round((float)x / (float)RANGE) * RANGE, 255);
     }
 
     @Override

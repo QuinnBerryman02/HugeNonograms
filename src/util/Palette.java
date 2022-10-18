@@ -7,21 +7,8 @@ public class Palette {
     List<SimpleColor> colors = new ArrayList<SimpleColor>();
     List<Integer> amounts = new ArrayList<Integer>();
     int size = 0;
-    float PRICE = 6.69f;
 
     public int size() {return size;}
-
-    public float count() {
-        int total = 0;
-        for (Integer integer : amounts) {
-            total+=integer;
-        }
-        return total;
-    }
-
-    public float calculateCost() {
-        return (count() / 500f)*PRICE;
-    }
 
     public void reduceDots() {
         for(int i=0;i<size;i++) {
@@ -50,20 +37,8 @@ public class Palette {
         size++;
     }
 
-    public void addPixelStrict(SimpleColor sc) {
-        SimpleColor.strictness = 0;
-        int index = colors.indexOf(sc);
-        if(index == -1) {
-            colors.add(sc);
-            amounts.add(1);
-            size++;
-        } else {
-            amounts.set(index,amounts.get(index)+1);
-        }
-    }
-
-    public void addPixel(SimpleColor sc) {
-        SimpleColor.strictness = 1;
+    public void addPixel(SimpleColor sc, int strictness) {
+        SimpleColor.strictness = strictness;
         int index = colors.indexOf(sc);
         if(index == -1) {
             colors.add(sc);
@@ -87,10 +62,6 @@ public class Palette {
         return null;
     }
 
-    public SimpleColor findClosest(SimpleColor sc) {
-        return findClosest(sc, 0);
-    }
-
     public SimpleColor findClosest(SimpleColor sc, int strictness) {
         SimpleColor.strictness = strictness;
         int index = colors.indexOf(sc);
@@ -105,8 +76,7 @@ public class Palette {
         displayShort();
         for(int i=0;i<size;i++) {
             SimpleColor sc = colors.get(i);
-            String message = sc.toString() + "-["+ amounts.get(i) + "]";
-            System.out.print((char)27 + "[38;2;" + sc.r + ";" + sc.g + ";" + sc.b + "m" + message + (char)27 + "[0m");
+            System.out.print(sc + "-["+ amounts.get(i) + "]");
         }
     }
     public void displayShort() {
