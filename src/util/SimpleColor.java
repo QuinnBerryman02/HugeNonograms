@@ -23,6 +23,14 @@ public class SimpleColor {
         b = c.getBlue();
     }
 
+    public boolean isLight() {
+        return (r+g+b > 3*256/2f);
+    }
+
+    public Color toColor() {
+        return new Color(toInt());
+    }
+
     public int toInt() {
         return (new Color(r, g, b).getRGB());
     }

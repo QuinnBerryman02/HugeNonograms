@@ -37,7 +37,7 @@ class PixelColorCounter {
         Palette paletteGoal = readPaletteFile(matchingPalette);
         Palette paletteReduction = new Palette(img1, false);
         System.out.println("Total Goal Colors = " + paletteGoal.size());
-        System.out.println("PNG = " + name);
+        System.out.println("PNG = " + name + " " + img1.getWidth() + "x" + img1.getHeight());
         System.out.println("First Iteration Picture Colors = " + paletteReduction.size());
         paletteReduction.reduceDots();
         System.out.println("Second Iteration Picture Colors = " + paletteReduction.size());
