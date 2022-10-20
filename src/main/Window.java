@@ -5,79 +5,67 @@ import javax.swing.*;
 import src.main.Nonogram.ColorAmount;
 import src.main.Nonogram.Hints;
 import java.awt.image.BufferedImage;
+import java.nio.Buffer;
+import java.time.Instant;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.util.List;
 
-public class Window extends JFrame implements MouseListener, MouseMotionListener{  
+public class Window extends JFrame implements MouseListener, MouseMotionListener, MouseWheelListener {  
     Nonogram nonogram;
     int bx=50,by=50;
     int mx,my;
+    float scale = 1;
+    int cellSize = 10;
     boolean dragging = false;
+    boolean once = false;
 
     public Window(Nonogram nono) {
         super("Nonogram Program");
         nonogram = nono;
+        bx = ((int)(-nonogram.hintW * cellSize * scale) + bx);
+        by = ((int)(-nonogram.hintH * cellSize * scale) + by);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000,1000);
         setLayout(null);
         setVisible(true);
         addMouseListener(this);
         addMouseMotionListener(this);
+        addMouseWheelListener(this);
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        int cellSize = 5;
         g.setFont(new Font("my font",Font.ITALIC,cellSize));
-        int w = nonogram.W * cellSize;
-        int h = nonogram.H * cellSize;
-        int hw = nonogram.hintW * cellSize;
-        int hh = nonogram.hintH * cellSize;
+        int w = (int)(nonogram.W * cellSize * scale);
+        int h = (int)(nonogram.H * cellSize * scale);
+        int hw = (int)(nonogram.hintW * cellSize * scale);
+        int hh = (int)(nonogram.hintH * cellSize * scale);
         g.drawRect(bx, by+hh, hw, h);
         g.drawRect(bx+hw, by, w, hh);
         g.drawRect(bx+hw, by+hh, w, h);
         Hints hint = nonogram.obscuredHints;
-        
-        // for(int i=0;i<hint.rows.size();i++) {
-        //     int rowMax = hint.rows.get(i).size();
-        //     int x0 = (bx + hw) - (rowMax) * cellSize;
-        //     int y0 = (by + hh) + (i) * cellSize;
-        //     for(int j=0;j<rowMax;j++) {
-        //         ColorAmount ca = hint.rows.get(i).get(j);
-        //         g.setColor(ca.color.toColor());
-        //         g.fillRect(x0+(j)*cellSize, y0, cellSize, cellSize);
-        //         g.setColor(ca.color.isLight() ? Color.BLACK : Color.WHITE);
-        //         char[] chars = Integer.toString(ca.amount).toCharArray();
-        //         g.drawChars(chars, 0, chars.length, x0+(j)*cellSize, y0+cellSize);
+        BufferedImage lhi = nonogram.leftHintImage;
+        BufferedImage thi = nonogram.topHintImage;
+        BufferedImage image = nonogram.image; 
+        g.drawImage(lhi, bx, by+hh, bx+hw, by+hh+h, 0, 0, lhi.getWidth(), lhi.getHeight(), Color.magenta, getContentPane());
+        g.drawImage(thi, bx+hw, by, bx+hw+w, by+hh, 0, 0, thi.getWidth(), thi.getHeight(), Color.magenta, getContentPane());
+        g.drawImage(image, bx+hw, by+hh, bx+hw+w, by+hh+h, 0, 0, image.getWidth(), image.getHeight(), Color.magenta, getContentPane());
+        // int x0 = (bx + hw);
+        // int y0 = (by + hh);
+        // for(int i=0;i<image.getHeight();i++) {  //64x64 = 3600 ish
+        //     for(int j=0;j<image.getWidth();j++) {
+        //         g.setColor(new Color(image.getRGB(j, i)));
+        //         g.fillRect(x0+(j)*cellSize, y0+(i)*cellSize, cellSize, cellSize);
         //     }
         // }
-        // for(int j=0;j<hint.cols.size();j++) {
-        //     int colMax = hint.cols.get(j).size();
-        //     int x0 = (bx + hw) + (j) * cellSize;
-        //     int y0 = (by + hh) - (colMax) * cellSize;
-        //     for(int i=0;i<colMax;i++) {
-        //         ColorAmount ca = hint.cols.get(j).get(i);
-        //         g.setColor(ca.color.toColor());
-        //         g.fillRect(x0, y0+(i)*cellSize, cellSize, cellSize);
-        //         g.setColor(ca.color.isLight() ? Color.BLACK : Color.WHITE);
-        //         char[] chars = Integer.toString(ca.amount).toCharArray();
-        //         g.drawChars(chars, 0, chars.length, x0, y0+(i+1)*cellSize);
-        //     }
-        // }
-        BufferedImage image = PixelColorCounter.stringToImage("resources/middle/hit1_temporary.png");
-        int x0 = (bx + hw);
-        int y0 = (by + hh);
-        for(int i=0;i<image.getHeight();i++) {
-            for(int j=0;j<image.getWidth();j++) {
-                g.setColor(new Color(image.getRGB(j, i)));
-                g.fillRect(x0+(j)*cellSize, y0+(i)*cellSize, cellSize, cellSize);
-            }
-        }
     }
 
     @Override
@@ -120,5 +108,12 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
     @Override
     public void mouseReleased(MouseEvent e) {
         dragging = false;
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        if(e.getPreciseWheelRotation() < 0) scale*=1.05;
+        if(e.getPreciseWheelRotation() > 0) scale*=0.95;
+        repaint();
     }
 }  
