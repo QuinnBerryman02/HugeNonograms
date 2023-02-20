@@ -1,12 +1,14 @@
 package src.main;
 
+import src.util.ImageColorReducer;
+
 public class Main {
     public static void main(String[] args) {
-        begin("resources/middle/smallerBook_temporary.png");
+        begin("resources/final/vortex.png");
     }
 
     public static void begin(String name) {
-        Nonogram n = new Nonogram(PixelColorCounter.stringToImage(name));
+        Nonogram n = new Nonogram(ImageColorReducer.openStringAsImage(name));
         Window w = new Window(n);
     }
 }

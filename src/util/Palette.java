@@ -4,30 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
 public class Palette {
     List<SimpleColor> colors = new ArrayList<SimpleColor>();
     List<Integer> amounts = new ArrayList<Integer>();
-    int size = 0;
+    private int size = 0;
 
-    public Palette(File name) throws IOException {
-        FileReader fr=new FileReader(name);   
-        BufferedReader br=new BufferedReader(fr);  
-        String line;  
-        while((line=br.readLine())!=null) {  
-            addColor(new SimpleColor(line));
+    public Palette(String filename) {
+        try {
+            FileReader fr=new FileReader(filename);   
+            BufferedReader br=new BufferedReader(fr);  
+            String line;  
+            while((line=br.readLine())!=null) {  
+                addColor(new SimpleColor(line));
+            }  
+            fr.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }  
-        fr.close();
+        
     }
 
     public Palette(BufferedImage image, boolean strict) {
-        int w = image.getWidth();
-        int h = image.getHeight();
-        for(int i=0;i<h;i++) {
-            for(int j=0;j<w;j++) {
+        for(int i=0;i<image.getHeight();i++) {
+            for(int j=0;j<image.getWidth();j++) {
                 addPixel(new SimpleColor(image.getRGB(j, i)), strict ? 0 : 1);
             }
         }
@@ -45,7 +47,8 @@ public class Palette {
             else continue;
             SimpleColor sc = findClosest(colors.get(i), strict);
             SimpleColor.strictness = 0;
-            if(!sc.equals(colors.get(i))) {
+            if(!sc.exact(colors.get(i))) { 
+                //color got merged into another
                 int newColorIndex = colors.indexOf(sc);
                 amounts.set(newColorIndex,amounts.get(newColorIndex)+amounts.get(i));
                 colors.remove(i);
@@ -98,7 +101,7 @@ public class Palette {
     }
 
     public SimpleColor findLargestAmount() {
-        int max=Integer.MIN_VALUE;
+        int max = Integer.MIN_VALUE;
         SimpleColor sc = null;
         for(int i=0;i<size;i++) {
             if(amounts.get(i)>max) {
@@ -109,14 +112,22 @@ public class Palette {
         return sc;
     }
 
-    public void display() {
-        displayShort();
+    public void show() {
+        for(int i=0;i<size;i++) {
+            SimpleColor sc = colors.get(i);
+            System.out.print("\033[38;2;"+sc.r+";"+sc.g+";"+sc.b+"m████\033[0m");
+        }
+        System.out.println();
+    }
+
+    public void log() {
         for(int i=0;i<size;i++) {
             SimpleColor sc = colors.get(i);
             System.out.print(sc + "-["+ amounts.get(i) + "]");
         }
+        System.out.println("\nTotal colours = " + size);
     }
-    public void displayShort() {
+    public void logShort() {
         if(size<20) {
             for(int i=0;i<size;i++) {
                 SimpleColor sc = colors.get(i);

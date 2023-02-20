@@ -3,12 +3,11 @@ package src.util;
 import java.awt.Color;
 
 public class SimpleColor {
-    private int r,g,b;
+    int r,g,b;
     
-    
-    public static int strictness = 1;
     public final static int SHADES = 17;
     public final static int RANGE = 255 / SHADES;
+    public static int strictness = 1;
 
     public SimpleColor(String hexcode) {
         r = fromHex2(hexcode.substring(1, 3));
@@ -16,8 +15,8 @@ public class SimpleColor {
         b = fromHex2(hexcode.substring(5, 7));
     }
 
-    public SimpleColor(int color) {
-        Color c = new Color(color);
+    public SimpleColor(int colorInt) {
+        Color c = new Color(colorInt);
         r = c.getRed();
         g = c.getGreen();
         b = c.getBlue();
@@ -36,23 +35,18 @@ public class SimpleColor {
     }
 
     public boolean close(SimpleColor sc) {
-        return Math.abs(r - sc.r) <= RANGE*strictness
-        && Math.abs(g - sc.g) <= RANGE*strictness
-        && Math.abs(b - sc.b) <= RANGE*strictness;
+        return  Math.abs(r - sc.r) <= RANGE*strictness && 
+                Math.abs(g - sc.g) <= RANGE*strictness && 
+                Math.abs(b - sc.b) <= RANGE*strictness;
     }
 
     public boolean exact(SimpleColor sc) {
-        return Math.abs(r - sc.r) <= 0
-        && Math.abs(g - sc.g) <= 0
-        && Math.abs(b - sc.b) <= 0;
+        return r == sc.r && g == sc.g && b == sc.b;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SimpleColor) {
-            SimpleColor sc = (SimpleColor)obj;
-            return close(sc);
-        } else return false;
+        return (obj instanceof SimpleColor) ? close((SimpleColor)obj) : false;
     }
 
     @Override

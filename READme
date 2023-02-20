@@ -1,0 +1,19 @@
+This is a project I am currently working on where I 
+am attempting to automatically generate large(1000x1000) 
+nonograms/picross puzzles.
+
+It involves some image color compression experiments at the moment
+and as I progress, I will update it.
+
+How to use
+Place image files in the resources/input folder
+Create the middle, final and compare folders also in resources
+Create a txt file with colors in hex format seperated by newlines
+The program will attempt to convert all images in input to
+the specified color palette. Limited success at the moment...
+
+Example {
+#e4e7e1
+#d5d6d9
+#b2bcc1
+}
