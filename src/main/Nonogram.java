@@ -43,7 +43,7 @@ public class Nonogram {
     }
 
     public void createHintImages(Hints hints) {
-        int cellSize = 10;
+        int cellSize = 1;
         int w = W * cellSize;
         int h = H * cellSize;
         int hw = hints.maxW * cellSize;

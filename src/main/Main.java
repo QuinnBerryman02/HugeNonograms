@@ -4,7 +4,7 @@ import src.util.ImageColorReducer;
 
 public class Main {
     public static void main(String[] args) {
-        begin("resources/final/vortex.png");
+        begin("resources/compare/smallerBook.png");
     }
 
     public static void begin(String name) {
