@@ -20,7 +20,7 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
     int viewH = 700;
     int hintW = 300;
     int hintH = 300;
-    int vx=bx,vy=by;
+    int vx=0,vy=0;
     int mx,my;
     float scale = 1f;
 
@@ -47,9 +47,29 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         // image, dst rect, src rect, bgcolor, contentpane
         int vccW = Math.round(scale * image.getWidth());
         int vccH = Math.round(scale * image.getHeight());
-        g.drawImage(lhi, bx, by+hintH, bx+hintW, by+hintH+viewH, 0, 0, lhi.getWidth(), vccH, Color.magenta, getContentPane());
-        g.drawImage(thi, bx+hintW, by, bx+hintW+viewW, by+hintH, 0, 0, vccW, thi.getHeight(), Color.magenta, getContentPane());
-        g.drawImage(image, vx+hintW, vy+hintH, vx+hintW+viewW, vy+hintH+viewH, 0, 0, vccW, vccH, Color.magenta, getContentPane());
+        System.out.println("scale: " + scale);
+        System.out.println("width: " + (float)image.getWidth());
+        System.out.println("heigth: " + (float)image.getHeight());
+        System.out.println("w/h: " + (image.getWidth()/(float)image.getHeight()));
+        System.out.println("h/w: " + (image.getHeight()/(float)image.getWidth()));
+        int realVx = Math.round((float)vx / viewW * vccW);
+        int realVy = Math.round((float)vy / viewH * vccH);
+        if ((vx <= 0) && (vy <= 0) && (vx >= -viewW*((1.0f / scale) - 1.0f)) && (vy >= -viewW*((1.0f / scale) - 1.0f))) {
+            g.setColor(Color.green);
+        } else {
+            g.setColor(Color.red);
+        }
+        g.fillRect(bx, by, hintW, hintH);
+        g.setColor(Color.black);
+        System.out.println((vx <= 0));
+        System.out.println((vy <= 0));
+        System.out.println(vx >= -viewW*((1.0f / scale) - 1.0f));
+        System.out.println(vy >= -viewW*((1.0f / scale) - 1.0f));
+        System.out.println("vx: " + -vx + " -> " + (-((float)vx / viewW * vccW)+vccW));
+        System.out.println("vy: " + -vy + " -> " + (-((float)vy / viewH * vccH)+vccH));
+        g.drawImage(lhi, bx, by+hintH, bx+hintW, by+hintH+viewH, 0, -realVy, lhi.getWidth(), -realVy+vccH, Color.magenta, getContentPane());
+        g.drawImage(thi, bx+hintW, by, bx+hintW+viewW, by+hintH, -realVx, 0, -realVx+vccW, thi.getHeight(), Color.magenta, getContentPane());
+        g.drawImage(image, bx+hintW, by+hintH, bx+hintW+viewW, by+hintH+viewH, -realVx, -realVy, -realVx+vccW, -realVy+vccH, Color.magenta, getContentPane());
         g.drawRect(bx, by+hintH, hintW, viewH);   //left hint box
         g.drawRect(bx+hintW, by, viewW, hintH);   //top hint box
         g.drawRect(bx+hintW, by+hintH, viewW, viewH); //main image box
@@ -73,6 +93,14 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         int newy = e.getY();
         int dx = newx - mx;
         int dy = newy - my;
+        float limitL = 0;
+        float limitT = 0;
+        float limitR = -viewW*((1.0f / scale) - 1.0f);
+        float limitB = -viewW*((1.0f / scale) - 1.0f);
+        vx = Math.round(Math.min(vx, limitL));
+        vy = Math.round(Math.min(vy, limitT));
+        vx = Math.round(Math.max(vx, limitR));
+        vy = Math.round(Math.max(vy, limitB));
         vx += dx;
         vy += dy;
         mx = newx;
@@ -98,6 +126,14 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         scale = Math.min(scale, 1.0f);
         scale = Math.max(scale, limit);
         System.out.println(scale);
+        float limitL = 0;
+        float limitT = 0;
+        float limitR = -viewW*((1.0f / scale) - 1.0f);
+        float limitB = -viewW*((1.0f / scale) - 1.0f);
+        vx = Math.round(Math.min(vx, limitL));
+        vy = Math.round(Math.min(vy, limitT));
+        vx = Math.round(Math.max(vx, limitR));
+        vy = Math.round(Math.max(vy, limitB));
         repaint();
     }
 }  
