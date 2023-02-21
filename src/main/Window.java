@@ -15,6 +15,7 @@ import java.awt.Toolkit;
 
 public class Window extends JFrame implements MouseListener, MouseMotionListener, MouseWheelListener {  
     Nonogram nonogram;
+    DrawPanel panel;
     int bx=50,by=50;
     int viewW = 700;
     int viewH = 700;
@@ -35,44 +36,11 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        //g.setFont(new Font("my font",Font.ITALIC,CELL_SIZE));
-        BufferedImage lhi = nonogram.leftHintImage;
-        BufferedImage thi = nonogram.topHintImage;
-        BufferedImage image = nonogram.image; 
-        // image, dst rect, src rect, bgcolor, contentpane
-        int vccW = Math.round(scale * image.getWidth());
-        int vccH = Math.round(scale * image.getHeight());
-        System.out.println("scale: " + scale);
-        System.out.println("width: " + (float)image.getWidth());
-        System.out.println("heigth: " + (float)image.getHeight());
-        System.out.println("w/h: " + (image.getWidth()/(float)image.getHeight()));
-        System.out.println("h/w: " + (image.getHeight()/(float)image.getWidth()));
-        int realVx = Math.round((float)vx / viewW * vccW);
-        int realVy = Math.round((float)vy / viewH * vccH);
-        if ((vx <= 0) && (vy <= 0) && (vx >= -viewW*((1.0f / scale) - 1.0f)) && (vy >= -viewW*((1.0f / scale) - 1.0f))) {
-            g.setColor(Color.green);
-        } else {
-            g.setColor(Color.red);
-        }
-        g.fillRect(bx, by, hintW, hintH);
-        g.setColor(Color.black);
-        System.out.println((vx <= 0));
-        System.out.println((vy <= 0));
-        System.out.println(vx >= -viewW*((1.0f / scale) - 1.0f));
-        System.out.println(vy >= -viewW*((1.0f / scale) - 1.0f));
-        System.out.println("vx: " + -vx + " -> " + (-((float)vx / viewW * vccW)+vccW));
-        System.out.println("vy: " + -vy + " -> " + (-((float)vy / viewH * vccH)+vccH));
-        g.drawImage(lhi, bx, by+hintH, bx+hintW, by+hintH+viewH, 0, -realVy, lhi.getWidth(), -realVy+vccH, Color.magenta, getContentPane());
-        g.drawImage(thi, bx+hintW, by, bx+hintW+viewW, by+hintH, -realVx, 0, -realVx+vccW, thi.getHeight(), Color.magenta, getContentPane());
-        g.drawImage(image, bx+hintW, by+hintH, bx+hintW+viewW, by+hintH+viewH, -realVx, -realVy, -realVx+vccW, -realVy+vccH, Color.magenta, getContentPane());
-        g.drawRect(bx, by+hintH, hintW, viewH);   //left hint box
-        g.drawRect(bx+hintW, by, viewW, hintH);   //top hint box
-        g.drawRect(bx+hintW, by+hintH, viewW, viewH); //main image box
+        panel = new DrawPanel();
+        getContentPane().add(panel) ;
+        panel.setVisible(true);
+        panel.setSize(screenSize);
+        validate();
     }
 
     @Override
@@ -97,12 +65,12 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         float limitT = 0;
         float limitR = -viewW*((1.0f / scale) - 1.0f);
         float limitB = -viewW*((1.0f / scale) - 1.0f);
+        vx += dx;
+        vy += dy;
         vx = Math.round(Math.min(vx, limitL));
         vy = Math.round(Math.min(vy, limitT));
         vx = Math.round(Math.max(vx, limitR));
         vy = Math.round(Math.max(vy, limitB));
-        vx += dx;
-        vy += dy;
         mx = newx;
         my = newy;
         repaint();  
@@ -125,7 +93,6 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         float limit = 1f / Math.max(nonogram.W, nonogram.H);
         scale = Math.min(scale, 1.0f);
         scale = Math.max(scale, limit);
-        System.out.println(scale);
         float limitL = 0;
         float limitT = 0;
         float limitR = -viewW*((1.0f / scale) - 1.0f);
@@ -136,4 +103,26 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         vy = Math.round(Math.max(vy, limitB));
         repaint();
     }
+
+    class DrawPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            BufferedImage lhi = nonogram.leftHintImage;
+            BufferedImage thi = nonogram.topHintImage;
+            BufferedImage image = nonogram.image; 
+            int vccW = Math.round(scale * image.getWidth());
+            int vccH = Math.round(scale * image.getHeight());
+            int realVx = Math.round((float)vx / viewW * vccW);
+            int realVy = Math.round((float)vy / viewH * vccH);
+            // image, dst rect, src rect, bgcolor, contentpane
+            g.drawImage(lhi, bx, by+hintH, bx+hintW, by+hintH+viewH, 0, -realVy, lhi.getWidth(), -realVy+vccH, Color.magenta, getContentPane());
+            g.drawImage(thi, bx+hintW, by, bx+hintW+viewW, by+hintH, -realVx, 0, -realVx+vccW, thi.getHeight(), Color.magenta, getContentPane());
+            g.drawImage(image, bx+hintW, by+hintH, bx+hintW+viewW, by+hintH+viewH, -realVx, -realVy, -realVx+vccW, -realVy+vccH, Color.magenta, getContentPane());
+            g.drawRect(bx, by+hintH, hintW, viewH);   //left hint box
+            g.drawRect(bx+hintW, by, viewW, hintH);   //top hint box
+            g.drawRect(bx+hintW, by+hintH, viewW, viewH); //main image box
+        }
+    }
 }  
+

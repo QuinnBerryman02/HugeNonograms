@@ -1,0 +1,3 @@
+center zoom on mouse position istead of 0,0
+fix aspect ratio of pixels / preserve rectangle on zoom out
+refactor rendering variables to make more sense

@@ -1,3 +1,4 @@
 resources/
 *.txt
 *.png
+!todo.txt
