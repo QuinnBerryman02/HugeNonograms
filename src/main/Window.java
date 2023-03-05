@@ -48,7 +48,6 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         panel.setVisible(true);
         panel.setSize(screenSize);
         validate();
-        System.out.println(label);
     }
 
     @Override
@@ -140,52 +139,31 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
             BufferedImage lhi = nonogram.leftHintImage;
             BufferedImage thi = nonogram.topHintImage;
             BufferedImage image = nonogram.image; 
-            int vccW = Math.round(scale * image.getWidth());
-            int vccH = Math.round(scale * image.getHeight());
-            int vccMax = Math.max(vccW, vccH);
-            int realVx = Math.round((float)vx / viewW * vccMax);
-            int realVy = Math.round((float)vy / viewH * vccMax);
-            if(image.getWidth() < image.getHeight()) {
-                float ratio = (float)image.getWidth() / image.getHeight() / scale;
-                float start = 0.5f - ratio/2;
-                float end = 0.5f + ratio/2;
-                if(ratio >= 1.0f) {
-                    g.drawImage(thi,    bx+hintW,           by,         bx+hintW+viewW,     by+hintH,       -realVx,    0,          -realVx+vccH,   thi.getHeight(),            Color.magenta, getContentPane()); 
-                    g.drawImage(lhi,    bx,                 by+hintH,   bx+hintW,           by+hintH+viewH, 0,          -realVy,    lhi.getWidth(), -realVy+vccH,               Color.magenta, getContentPane()); 
-                    g.drawImage(image,  bx+hintW,           by+hintH,   bx+hintW+viewW,     by+hintH+viewH, -realVx,    -realVy,    -realVx+vccH,   -realVy+vccH,               Color.magenta, getContentPane());
-                } else {
-                    int realStart = (int)(start * viewH);
-                    int realEnd = (int)(end * viewH);
-                    g.drawImage(thi,    bx+hintW+realStart, by,         bx+hintW+realEnd,   by+hintH,       -realVx,    0,          -realVx+image.getWidth(),   thi.getHeight(),            Color.magenta, getContentPane());  
-                    g.drawImage(lhi,    bx,                 by+hintH,   bx+hintW,           by+hintH+viewH, 0,          -realVy,    lhi.getWidth(),             -realVy+vccH,  Color.magenta, getContentPane());
-                    g.drawImage(image,  bx+hintW+realStart, by+hintH,   bx+hintW+realEnd,   by+hintH+viewH, -realVx,    -realVy,    -realVx+image.getWidth(),   -realVy+vccH,  Color.magenta, getContentPane());
-                }
-            }
-            if(image.getHeight() < image.getWidth()) {
-                float ratio = (float)image.getHeight() / image.getWidth() / scale;
-                float start = 0.5f - ratio/2;
-                float end = 0.5f + ratio/2;
-                if(ratio >= 1.0f) {
-                    g.drawImage(thi,    bx+hintW,   by,                 bx+hintW+viewW, by+hintH,           -realVx,    0,          -realVx+vccW,   thi.getHeight(),            Color.magenta, getContentPane()); 
-                    g.drawImage(lhi,    bx,         by+hintH,           bx+hintW,       by+hintH+viewH,     0,          -realVy,    lhi.getWidth(), -realVy+vccW,               Color.magenta, getContentPane());  
-                    g.drawImage(image,  bx+hintW,   by+hintH,           bx+hintW+viewW, by+hintH+viewH,     -realVx,    -realVy,    -realVx+vccW,   -realVy+vccW,               Color.magenta, getContentPane());
-                } else {
-                    int realStart = (int)(start * viewH);
-                    int realEnd = (int)(end * viewH);
-                    g.drawImage(thi,    bx+hintW,   by,                 bx+hintW+viewW, by+hintH,           -realVx,    0,          -realVx+vccW,   thi.getHeight(),            Color.magenta, getContentPane()); 
-                    g.drawImage(lhi,    bx,         by+hintH+realStart, bx+hintW,       by+hintH+realEnd,   0,          -realVy,    lhi.getWidth(), -realVy+image.getHeight(),  Color.magenta, getContentPane());  
-                    g.drawImage(image,  bx+hintW,   by+hintH+realStart, bx+hintW+viewW, by+hintH+realEnd,   -realVx,    -realVy,    -realVx+vccW,   -realVy+image.getHeight(),  Color.magenta, getContentPane());
-                }
-                
-            }
-            // g.drawImage(lhi, bx, by+hintH, bx+hintW, by+hintH+viewH, 0, -realVy, lhi.getWidth(), -realVy+vccH, Color.magenta, getContentPane());
-            // g.drawImage(thi, bx+hintW, by, bx+hintW+viewW, by+hintH, -realVx, 0, -realVx+vccW, thi.getHeight(), Color.magenta, getContentPane());   
-            // g.drawImage(image, bx+hintW, by+hintH, bx+hintW+viewW, by+hintH+viewH, -realVx, -realVy, -realVx+vccW, -realVy+vccH, Color.magenta, getContentPane());
-            // image, dst rect, src rect, bgcolor, contentpane
-            g.drawRect(bx, by+hintH, hintW, viewH);   //left hint box
-            g.drawRect(bx+hintW, by, viewW, hintH);   //top hint box
-            g.drawRect(bx+hintW, by+hintH, viewW, viewH); //main image box
-            label.setText("vx: " + vx + " , vy: " + vy + ", realVx: " + realVx + ", realVy: " + realVy);
+            int imgW = image.getWidth();               
+            int imgH = image.getHeight();
+            int vccMax = (int)(scale * Math.max(imgW, imgH));   //maximum view cell count
+            int rcx = Math.round((float)vx / viewW * vccMax);   //real cell x
+            int rcy = Math.round((float)vy / viewH * vccMax);   //real cell y
+            float ratioX = Math.min(1, (float)imgW / imgH / scale); //how much of the view the img
+            float ratioY = Math.min(1, (float)imgH / imgW / scale); //can take up at this scale
+            int bhx = bx + hintW;                       //base hint x
+            int bhy = by + hintH;                       //base hint y
+            int rsx = (int)((0.5f - ratioX/2) * viewW); //real start x
+            int rex = (int)((0.5f + ratioX/2) * viewW); //real end x
+            int riW = Math.min(-rcx+vccMax, imgW);      //real image width
+            
+            int rsy = (int)((0.5f - ratioY/2) * viewH); //real start y
+            int rey = (int)((0.5f + ratioY/2) * viewH); //real end y
+            int riH = Math.min(-rcy+vccMax, imgH);      //real image height
+
+            //          image,  dst x0,      dst y0,    dst x1,     dst y1,     src x0,     src y0,     src x1,         src y1,             bgcolor,       contentpane
+            g.drawImage(thi,    bhx+rsx,     by,        bhx+rex,    bhy,        -rcx,       0,          riW,            thi.getHeight(),    Color.magenta, getContentPane()); 
+            g.drawImage(lhi,    bx,          bhy+rsy,   bhx,        bhy+rey,    0,          -rcy,       lhi.getWidth(), riH,                Color.magenta, getContentPane()); 
+            g.drawImage(image,  bhx+rsx,     bhy+rsy,   bhx+rex,    bhy+rey,    -rcx,       -rcy,       riW,            riH,                Color.magenta, getContentPane());
+            
+            g.drawRect(bx, bhy, hintW, viewH);   //left hint box
+            g.drawRect(bhx, by, viewW, hintH);   //top hint box
+            g.drawRect(bhx, bhy, viewW, viewH); //main image box
         }
     }
 }  
