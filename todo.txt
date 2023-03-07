@@ -6,3 +6,4 @@ add actual nonogram gameplay
 add auto hint box (only shows relevant hints to the cells on screen)
 sensibly draw numbers over hint cells 
 improve palette compression for larger images (reduce random/pointless dithering)
+test
