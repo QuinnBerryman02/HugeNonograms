@@ -17,19 +17,21 @@ import java.awt.Toolkit;
 public class Window extends JFrame implements MouseListener, MouseMotionListener, MouseWheelListener {  
     Nonogram nonogram;
     DrawPanel panel;
-    JLabel label;
-    int bx=50,by=50;
-    int viewW = 600;
-    int viewH = 600;
-    int hintW = 300;
+    JTextArea label;
+    int bx=50,by=50;    //base coordinate to start drawing
+    int viewW = 600;    //size of the nonogram view
+    int viewH = 600;    
+    int hintW = 300;    //size of the hint boxes
     int hintH = 300;
-    int vx=0,vy=0;
-    int mx,my;
-    float scale = 1f;
+    int vx=0,vy=0;      //offset of the image 
+    int mx,my;          //tracker of mouse position for dragging 
+    float scale = 1f;   //tracker of scale for the mousewheel listener
+    int cells = 1;      //maximum amount of cells that can be displayed in the view
 
     public Window(Nonogram nono) {
         super("Nonogram Program");
         nonogram = nono;
+        cells = Math.max(nonogram.W, nonogram.H);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(screenSize);
@@ -38,10 +40,10 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
-        label = new JLabel("Sample text");
+        label = new JTextArea("Sample text");
         label.setFont(label.getFont().deriveFont(20.0F));
         label.setForeground(Color.black);
-        label.setSize(new Dimension(1000, 50));
+        label.setSize(new Dimension(1000, 150));
         getContentPane().add(label, BorderLayout.NORTH);
         panel = new DrawPanel();
         getContentPane().add(panel);
@@ -66,30 +68,22 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
     public void mouseDragged(MouseEvent e) {
         int newx = e.getX();
         int newy = e.getY();
-        int dx = newx - mx;
-        int dy = newy - my;
-        float ratioY = 1.0f / scale;
-        float ratioX = 1.0f / scale;
-        if(nonogram.H < nonogram.W) {
-            ratioY = (float)nonogram.H / nonogram.W / scale;
-        } else if (nonogram.W < nonogram.H) {
-            ratioX = (float)nonogram.W / nonogram.H / scale;
-        }
-        float limitL = 0;
-        float limitT = 0;
-        float limitR = (-ratioX + 1) * viewW;
-        float limitB = (-ratioY + 1) * viewH;
-        
-        vx += dx;
-        vy += dy;
-        vx = Math.round(Math.min(vx, limitL));
-        vy = Math.round(Math.min(vy, limitT));
-        vx = Math.round(Math.max(vx, limitR));
-        vy = Math.round(Math.max(vy, limitB));
+        vx -= (newx - mx);
+        vy -= (newy - my);
+
+        float ratioY = (float)nonogram.H / cells;
+        float ratioX = (float)nonogram.W / cells;
+
+        vx = (int)Math.max(vx, 0);                      //left
+        vy = (int)Math.max(vy, 0);                      //top
+        vx = (int)Math.min(vx, (ratioX - 1) * viewW);   //right
+        vy = (int)Math.min(vy, (ratioY - 1) * viewH);   //bottom
+
         mx = newx;
         my = newy;
-        if(ratioX < 1) vx = 0;
-        if(ratioY < 1) vy = 0;
+
+        if(ratioX < 1) vx = 0;        //if image isnt zoomed in enough for equal aspect ratio
+        if(ratioY < 1) vy = 0;        //set the offset to 0
         
         repaint();  
     }
@@ -108,26 +102,21 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
     public void mouseWheelMoved(MouseWheelEvent e) { //decreases on zoom in
         if(e.getPreciseWheelRotation() > 0) scale*=1.05;
         if(e.getPreciseWheelRotation() < 0) scale*=0.95;
-        float limit = 1f / Math.max(nonogram.W, nonogram.H);
-        scale = Math.min(scale, 1.0f);
-        scale = Math.max(scale, limit);
-        float ratioY = 1.0f / scale;
-        float ratioX = 1.0f / scale;
-        if(nonogram.H < nonogram.W) {
-            ratioY = (float)nonogram.H / nonogram.W / scale;
-        } else if (nonogram.W < nonogram.H) {
-            ratioX = (float)nonogram.W / nonogram.H / scale;
-        }
-        float limitL = 0;
-        float limitT = 0;
-        float limitR = (-ratioX + 1) * viewW;
-        float limitB = (-ratioY + 1) * viewH;
-        vx = Math.round(Math.min(vx, limitL));
-        vy = Math.round(Math.min(vy, limitT));
-        vx = Math.round(Math.max(vx, limitR));
-        vy = Math.round(Math.max(vy, limitB));
-        if(ratioX < 1) vx = 0;
-        if(ratioY < 1) vy = 0;
+        int maxDim = Math.max(nonogram.W, nonogram.H);
+        scale = Math.min(1, scale);
+        scale = Math.max(1.0f / maxDim, scale);
+        cells = (int)(scale * maxDim);
+
+        float ratioY = (float)nonogram.H / cells;
+        float ratioX = (float)nonogram.W / cells;
+
+        vx = (int)Math.max(vx, 0);                      //left
+        vy = (int)Math.max(vy, 0);                      //top
+        vx = (int)Math.min(vx, (ratioX - 1) * viewW);   //right
+        vy = (int)Math.min(vy, (ratioY - 1) * viewH);   //bottom
+
+        if(ratioX < 1) vx = 0;        //if image isnt zoomed in enough for equal aspect ratio
+        if(ratioY < 1) vy = 0;        //set the offset to 0
         
         repaint();
     }
@@ -135,35 +124,47 @@ public class Window extends JFrame implements MouseListener, MouseMotionListener
     class DrawPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
+            long start = System.nanoTime();
             super.paintComponent(g);
             BufferedImage lhi = nonogram.leftHintImage;
             BufferedImage thi = nonogram.topHintImage;
             BufferedImage image = nonogram.image; 
+
             int imgW = image.getWidth();               
             int imgH = image.getHeight();
-            int vccMax = (int)(scale * Math.max(imgW, imgH));   //maximum view cell count
-            int rcx = Math.round((float)vx / viewW * vccMax);   //real cell x
-            int rcy = Math.round((float)vy / viewH * vccMax);   //real cell y
-            float ratioX = Math.min(1, (float)imgW / imgH / scale); //how much of the view the img
-            float ratioY = Math.min(1, (float)imgH / imgW / scale); //can take up at this scale
-            int bhx = bx + hintW;                       //base hint x
-            int bhy = by + hintH;                       //base hint y
-            int rsx = (int)((0.5f - ratioX/2) * viewW); //real start x
-            int rex = (int)((0.5f + ratioX/2) * viewW); //real end x
-            int riW = Math.min(-rcx+vccMax, imgW);      //real image width
-            
-            int rsy = (int)((0.5f - ratioY/2) * viewH); //real start y
-            int rey = (int)((0.5f + ratioY/2) * viewH); //real end y
-            int riH = Math.min(-rcy+vccMax, imgH);      //real image height
+            int bhx = bx + hintW;                               //base hint x
+            int bhy = by + hintH;                               //base hint y  
+            float ratioX = Math.min(1, (float)imgW / cells);    //how much of the view the img
+            float ratioY = Math.min(1, (float)imgH / cells);    //can take up at this scale
 
+            int ssX = Math.round((float)vx / viewW * cells);    //src start X
+            int ssY = Math.round((float)vy / viewH * cells);    //src start Y
+            int seX = Math.min(ssX+cells, imgW);                //src end X
+            int seY = Math.min(ssY+cells, imgH);                //src end Y
+            
+            int dsX = (int)((0.5f - ratioX/2) * viewW);         //dst start X
+            int dsY = (int)((0.5f - ratioY/2) * viewH);         //dst start Y
+            int deX = (int)((0.5f + ratioX/2) * viewW);         //dst end X
+            int deY = (int)((0.5f + ratioY/2) * viewH);         //dst end Y
+            
             //          image,  dst x0,      dst y0,    dst x1,     dst y1,     src x0,     src y0,     src x1,         src y1,             bgcolor,       contentpane
-            g.drawImage(thi,    bhx+rsx,     by,        bhx+rex,    bhy,        -rcx,       0,          riW,            thi.getHeight(),    Color.magenta, getContentPane()); 
-            g.drawImage(lhi,    bx,          bhy+rsy,   bhx,        bhy+rey,    0,          -rcy,       lhi.getWidth(), riH,                Color.magenta, getContentPane()); 
-            g.drawImage(image,  bhx+rsx,     bhy+rsy,   bhx+rex,    bhy+rey,    -rcx,       -rcy,       riW,            riH,                Color.magenta, getContentPane());
+            g.drawImage(thi,    bhx+dsX,     by,        bhx+deX,    bhy,        ssX,        0,          seX,            thi.getHeight(),    Color.magenta, getContentPane()); 
+            g.drawImage(lhi,    bx,          bhy+dsY,   bhx,        bhy+deY,    0,          ssY,        lhi.getWidth(), seY,                Color.magenta, getContentPane()); 
+            g.drawImage(image,  bhx+dsX,     bhy+dsY,   bhx+deX,    bhy+deY,    ssX,        ssY,        seX,            seY,                Color.magenta, getContentPane());
             
             g.drawRect(bx, bhy, hintW, viewH);   //left hint box
             g.drawRect(bhx, by, viewW, hintH);   //top hint box
             g.drawRect(bhx, bhy, viewW, viewH); //main image box
+            
+            long end = System.nanoTime();
+            long length = end - start;
+            String s1 = "Paint took: " + (length / 1000000) + " ms";
+            String s2 = "ssX: " + (ssX) + " seX: " + seX;
+            String s3 = "ssY: " + (ssY) + " seY: " + seY;
+            String s4 = "scale: " + scale + " -> discreteScale: " + ((float)cells / Math.max(nonogram.W, nonogram.H)) + " rawCells: " + (scale * Math.max(nonogram.W, nonogram.H)) + " -> cells: " + cells;
+            String s5 = "seX/W: " + ((float)seX / imgW) + " seY/H: " + ((float)seY / imgH);
+            //label.setText();
+            label.setText(s1 + "\n" + s2 + "\n" + s3 + "\n" + s4 + "\n" + s5);
         }
     }
 }  

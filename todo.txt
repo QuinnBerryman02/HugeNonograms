@@ -2,7 +2,7 @@
 center zoom on mouse position istead of 0,0
     <>refactor rendering variables to make more sense
 add actual nonogram gameplay
-fix graphic bug with 1 off column/row at edge
+    <>fix graphic bug with 1 off column/row at edge
 add auto hint box (only shows relevant hints to the cells on screen)
 sensibly draw numbers over hint cells 
 improve palette compression for larger images (reduce random/pointless dithering)
