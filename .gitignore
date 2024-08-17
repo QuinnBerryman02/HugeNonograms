@@ -3,3 +3,4 @@ resources/
 *.png
 !todo.txt
 .vscode/
+!images/**
